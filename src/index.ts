@@ -20,6 +20,7 @@ import {
   setAgentTag,
   logger,
   timer,
+  loadDirective,
 } from 'agents-library';
 import type { BaseAgentConfig } from 'agents-library';
 import { setupValidationHandler } from './handlers/validation.js';
@@ -122,6 +123,19 @@ async function main(): Promise<void> {
 
   const baseAgent = new BaseAgent(baseAgentConfig);
   await baseAgent.connect(vault);
+
+  // Load directive
+  try {
+    const toolNames = baseAgent.client.readAgentJson().tools.map((t: any) => t.name);
+    const directive = await loadDirective(process.cwd(), { tools: toolNames, agentId });
+    if (directive) {
+      logger.info(agentId, `Loaded directive (${directive.length} chars): ${directive.trim().split('\n').find((l: string) => l.trim())?.trim().slice(0, 80)}`, timer.elapsed('main'));
+    } else {
+      logger.debug(agentId, 'No directive found', timer.elapsed('main'));
+    }
+  } catch (err: any) {
+    logger.warn(agentId, `Directive load failed (non-fatal): ${err.message}`, timer.elapsed('main'));
+  }
 
   // Load ability-file-local natively (zero-latency file ops, in-process)
   let nativeFileLocal: any = null;
