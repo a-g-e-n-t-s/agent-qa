@@ -1,7 +1,7 @@
 {
   "name": "agent-qa",
   "type": "agent",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "entrypoint": "dist/index.js",
   "scripts": {
     "preflight": "node -e \"const fs=require('fs');if(!fs.existsSync('node_modules')){console.error('Dependencies not installed. Run: npm install');process.exit(1)}console.log('✓ Dependencies OK')\"",
@@ -42,13 +42,21 @@
       "engine": "podman",
       "services": {
         "app": {
-          "image": "agent-qa:0.3.3",
-          "command": ["sh", "-c", "kadi secret receive --vault anthropic --vault model-manager --vault arcadedb && kadi run start"],
+          "image": "agent-qa:0.3.4",
+          "command": [
+            "sh",
+            "-c",
+            "kadi secret receive --vault anthropic --vault model-manager --vault arcadedb && kadi run start"
+          ],
           "expose": [
             {
               "port": 3000,
               "as": 3000,
-              "to": [{ "global": true }]
+              "to": [
+                {
+                  "global": true
+                }
+              ]
             }
           ],
           "env": [
@@ -61,22 +69,33 @@
             "memory": "512Mi",
             "ephemeralStorage": "1Gi"
           },
-          "pricing": { "amount": "500", "denom": "uact" }
+          "pricing": {
+            "amount": "500",
+            "denom": "uact"
+          }
         }
       },
       "secrets": {
         "vaults": [
           {
             "vault": "anthropic",
-            "required": ["ANTHROPIC_API_KEY"]
+            "required": [
+              "ANTHROPIC_API_KEY"
+            ]
           },
           {
             "vault": "model-manager",
-            "required": ["MODEL_MANAGER_API_KEY", "MODEL_MANAGER_BASE_URL"]
+            "required": [
+              "MODEL_MANAGER_API_KEY",
+              "MODEL_MANAGER_BASE_URL"
+            ]
           },
           {
             "vault": "arcadedb",
-            "required": ["ARCADE_USERNAME", "ARCADE_PASSWORD"]
+            "required": [
+              "ARCADE_USERNAME",
+              "ARCADE_PASSWORD"
+            ]
           }
         ],
         "delivery": "broker"
@@ -89,7 +108,7 @@
     "ability-eval": "*",
     "ability-vision": "*",
     "ability-file-remote": "*",
-    "ability-log": "*"
+    "ability-log": "^0.1.5"
   },
   "brokers": {
     "remote": "wss://broker.dadavidtseng.com/kadi"
