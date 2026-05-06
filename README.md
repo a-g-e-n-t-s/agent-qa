@@ -49,7 +49,7 @@ Primary configuration sources and envs
 - Vault-delivered secrets — loadable via agents-library; agent.json deploy also lists required vaults (anthropic, model-manager, arcadedb).
 - Deploy/runtime envs (set in agent.json deploy): `ARCADE_HOST`, `ARCADE_PORT` (container environment used in the Akash deploy configuration).
 
-Provider selection behavior (implemented in src/index.ts -> buildProviderConfig)
+Provider selection behavior (implemented in src/index.ts)
 - Primary/fallback provider names are read from config.toml (`[provider] PRIMARY` / `FALLBACK`).
 - Credentials for providers are resolved from environment variables first, then from loaded vault secrets:
   - `ANTHROPIC_API_KEY`
@@ -119,3 +119,5 @@ Building for production
   - `kadi secret receive --vault anthropic --vault model-manager --vault arcadedb && kadi run start`
   to fetch Vault secrets (anthropic, model-manager, arcadedb) before starting the agent in the container.
 - Build environment sets `NODE_ENV=production` in the image configuration
+
+---
