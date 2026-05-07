@@ -1,9 +1,9 @@
 # agent-qa
-> QA-oriented KADI agent that performs semantic validation and heuristic scoring for task reviews.
+> QA-oriented KADI agent that performs semantic validation and heuristic scoring for task reviews. (type: agent)
 
 Overview
 --------
-agent-qa is a KADI (kadi-agent) that subscribes to review tasks and performs semantic validation using an LLM provider (Model Manager or Anthropic) with a heuristic fallback. It uses agents-library's BaseAgent to connect to a KADI broker, exposes memory-backed pattern recall, and registers a validation handler to score and review tasks published to the broker.
+agent-qa is a KADI agent that subscribes to review tasks and performs semantic validation using an LLM provider (Model Manager or Anthropic) with a heuristic fallback. It uses agents-library's BaseAgent to connect to a KADI broker, exposes memory-backed pattern recall, and registers a validation handler to score and review tasks published to the broker.
 
 Quick Start
 -----------
@@ -29,7 +29,7 @@ Tools
 | broker (KADI WS) | WebSocket broker(s) used for messaging. Default remote broker: `wss://broker.dadavidtseng.com/kadi` (configured in agent.json and config.toml). Local broker can be configured via `[broker.local]` in config.toml and overridden with env vars `KADI_BROKER_URL_LOCAL` / `KADI_BROKER_URL_REMOTE`. |
 | model-manager | Primary provider option when configured in config.toml (`provider.PRIMARY = "model-manager"`) and when `MODEL_MANAGER_BASE_URL` / `MODEL_MANAGER_API_KEY` are available (from env or vault). Model configured in config.toml: `gpt-5-mini`. |
 | anthropic | Fallback or primary provider when configured and `ANTHROPIC_API_KEY` is available. Uses `@anthropic-ai/sdk`. Model configured in config.toml: `claude-haiku-4-5-20251001`. |
-| secret-ability + other abilities | Declared abilities in `agent.json` (see Abilities below). The agent expects `kadi secret` or vault-delivered credentials for provider and arcadedb secrets in production deployments. |
+| secret-ability + other abilities | Declared abilities in `agent.json` (see Abilities below). The agent expects `kadi secret` or vault-delivered credentials for provider and arcadedb secrets in production deployments. In the Akash deploy configuration the build step runs `kadi secret receive --vault anthropic --vault model-manager --vault arcadedb` to fetch required vault secrets. |
 | validation handler (`src/handlers/validation.js`) | Registers to `task.review_requested` events and scores/reviews tasks. Uses `baseAgent.providerManager` (LLM) and `baseAgent.memoryService` (past pattern recall) when available. |
 | memory service (BaseAgent.memoryService) | Persistent memory-backed service. Default data path: `./data/memory` (configurable via config.toml or MEMORY_DATA_PATH env var). |
 | provider manager (BaseAgent.providerManager) | Abstracted provider layer that routes requests to Model Manager or Anthropic depending on configuration (set in config.toml and credential availability). |
@@ -46,8 +46,8 @@ Primary configuration sources and envs
 - `MODEL_MANAGER_BASE_URL` — Model Manager base URL (env or vault).
 - `MODEL_MANAGER_API_KEY` — Model Manager API key (env or vault).
 - `MEMORY_DATA_PATH` — Filesystem path for memory persistence. Default: `./data/memory`.
-- Vault-delivered secrets — loadable via agents-library; agent.json deploy also lists required vaults (anthropic, model-manager, arcadedb).
-- Deploy/runtime envs (set in agent.json deploy): `ARCADE_HOST`, `ARCADE_PORT` (container environment used in the Akash deploy configuration).
+- Vault-delivered secrets — loadable via agents-library; agent.json deploy also lists required vaults (anthropic, model-manager, arcadedb). In the Akash deploy manifest secrets are delivered via `delivery: "broker"`.
+- Deploy/runtime envs (set in agent.json deploy): `ARCADE_HOST`, `ARCADE_PORT` (container environment used in the Akash deploy configuration, e.g. `arcadedb.dadavidtseng.com:443`).
 
 Provider selection behavior (implemented in src/index.ts)
 - Primary/fallback provider names are read from config.toml (`[provider] PRIMARY` / `FALLBACK`).
@@ -58,7 +58,7 @@ Provider selection behavior (implemented in src/index.ts)
 - If no provider credentials are available the agent will run in heuristic-only scoring mode (LLM semantic review disabled) and will log a warning.
 
 Files and important config locations
-- Agent metadata: `agent.json` (name, version, scripts, build config, abilities, brokers)
+- Agent metadata: `agent.json` (name, version, scripts, build config, abilities, brokers). Current package version in agent.json: 0.3.6.
 - Entrypoint: `src/index.ts`
 - Compiled entrypoint: `dist/index.js` (also configured as the agent.json entrypoint)
 - Runtime configuration: `config.toml` (broker URLs, networks, provider choices, memory path, logging)
@@ -91,33 +91,4 @@ High-level components and data flow:
 
 Key runtime behaviors
 - Reads config.toml via agents-library.readConfig(); at least one broker (local or remote) must be configured or the agent will throw on startup.
-- Loads secrets via agents-library.loadVaultCredentials(); environment variables override vault values.
-- Logs startup summary including broker URLs, networks and LLM provider summary (primary/fallback and model names when present).
-- On fatal startup errors the process exits with code 1 after logging the error.
-
-Development
------------
-Scripts (from agent.json / package.json)
-- `npm run preflight` — Checks that dependencies are installed.
-- `npm run setup` — Invokes the TypeScript build (alias to `npm run build`).
-- `npm run start` — `node dist/index.js` (run compiled JS).
-- `npm run dev` — `tsx watch src/index.ts` (fast local development with watch).
-- `npm run build` — `npx tsc` (TypeScript build).
-- `npm run type-check` — `npx tsc --noEmit` (type-only checking).
-- `npm run lint` — `npx eslint src --ext .ts`
-- `npm run test` — `npx vitest`
-- `npm run clean` — Removes node_modules/dist and related build artifacts (agent.json clean includes removal of abilities/agent-lock.json/package-lock.json).
-
-Building for production
-- agent.json build steps include:
-  - `npm ci --include=dev`
-  - `kadi install kadi-secret`
-  - `kadi install`
-  - `npx tsc`
-  - `npm prune --omit=dev`
-- The Akash deploy in agent.json runs:
-  - `kadi secret receive --vault anthropic --vault model-manager --vault arcadedb && kadi run start`
-  to fetch Vault secrets (anthropic, model-manager, arcadedb) before starting the agent in the container.
-- Build environment sets `NODE_ENV=production` in the image configuration
-
----
+- Loads secrets via agents-library.loadVaultCredentials(); environment variables override
