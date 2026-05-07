@@ -1,7 +1,7 @@
 {
   "name": "agent-qa",
   "type": "agent",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "entrypoint": "dist/index.js",
   "scripts": {
     "preflight": "node -e \"const fs=require('fs');if(!fs.existsSync('node_modules')){console.error('Dependencies not installed. Run: npm install');process.exit(1)}console.log('✓ Dependencies OK')\"",
@@ -42,7 +42,7 @@
       "engine": "podman",
       "services": {
         "app": {
-          "image": "agent-qa:0.3.5",
+          "image": "agent-qa:0.3.6",
           "command": [
             "sh",
             "-c",
@@ -108,7 +108,7 @@
     "ability-eval": "*",
     "ability-vision": "*",
     "ability-file-remote": "*",
-    "ability-log": "^0.1.5"
+    "ability-log": "*"
   },
   "brokers": {
     "remote": "wss://broker.dadavidtseng.com/kadi"
